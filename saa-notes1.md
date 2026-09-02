@@ -45,7 +45,7 @@ and allow.
 Policies are stored separately and then attached to a user or group when needed.
 
 
-##Vital Notes
+## Vital Notes
 I covered shared responsibility model and IAM. So far, i came across some new cloud
 computing models ive never seen and that confused me. There was function as a service.
 Funtion as a Service iis when you write a function and it is executed when something 
