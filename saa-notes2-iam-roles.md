@@ -1,6 +1,6 @@
 **Date: 2nd Septenber, 2026**
 
-#IAM ROLES
+# IAM ROLES
 ------------
 IAM roles are much like users in the sense that they are identities you can create and
 add a permission to it to determine what they can and can not do. However, instead of
@@ -29,7 +29,7 @@ the role. Trust policy is a json document in which you define the principals tha
 trust to assume the role. The principals you can specify in the trust policy includes 
 users, roles, accounts and services. 
 
-##Using an IAM role to grant permissions to applicatiions running on Amazon EC2 
+## Using an IAM role to grant permissions to applicatiions running on Amazon EC2 
 instances
 --------------------------------------------------------------------------------
 Instead of having to manually add access keys to instances whenever they need to access
@@ -49,12 +49,14 @@ so it is safer and more secure.
 
 
 **BUILD**
+
 I created an s3 bucket and uploaded a file into it, i also created an iam role and 
 named it ec2-s3-read-role. i then lauched an ec2 instance and added the created role 
 instance profile. i was able to list the files and folder in my bucket and list the 
 buckets itself but could not copy a file into the bucket.
 
 **check**
+
 the credentials arrive through the instance metadata service(IMDS), reachable inside 
 the instance so the instance obtains the credentials from there authomatically and 
 assumes the role.
