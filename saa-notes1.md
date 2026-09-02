@@ -1,7 +1,6 @@
 # DOMAIN 1- DESIGN SECURE ARCHITECTURES
  ---------------------------------------
 ## Shared Responsibility Model
-
 Started by going over the amazon shared responsiblity model. Security in and security 
 of the cloud. The shared responsibility model tells what the customer is responsible
 for and what the service provider is responsible for.
@@ -10,15 +9,12 @@ reside in AWS. Cloud service provider is generally responsible for the underlyin
 infrastructure.
 
 **Responsiblity in the cloud**
-
 If you can configure or store it then you (the customer) are responsible for it.
 
 **Responsiblity of the cloud**
-
 If you can not configure it then the cloud service provider is responsible for it.
 
 ## IAM
-
 IAM is a permission and access management service used for security on aws. It is a web
 service that helps you securely control access to aws resources. It is used for 
 authentication (who can sign in) and authorization (has permission) to use aws 
@@ -30,7 +26,6 @@ organisation service control policies(SCPs), AWS organisations resource control 
 policies. A permission is a statement in a policy that allows or denies something.
 
 **BUILD**
-
 I created a user named test-user-1 and two groups, read-only-testers which had 
 AmazonS3ReadOnlyAcess and deny-s3-readonly-group which denied AmazonS3ReadOnlyAccess.
 I put the user into the read-only-testers group initially and the user had access to 
@@ -41,7 +36,6 @@ and the user was denied access to viewvs3 buckets. An explicit deny always overr
 and allow.
 
 **Check**
-
 Policies are stored separately and then attached to a user or group when needed.
 
 
