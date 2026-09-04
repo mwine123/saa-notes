@@ -1,0 +1,88 @@
+**September 3, 2026**
+
+# HIGHLY AVAILABLE WEB APPLICATION
+
+I am going to be using a static website for this project because it is just meant for me
+to try new things and to explore and break things and fix them again. Plus that is frankly
+all I have.
+
+So far, I have created the VPC, which wasn't very hard to do. I have also created the
+subnets, which was a little tricky to figure out the IP ranges, but after a little refresher
+from my Cisco networking class notes, I easily did the subnetting and figured it out. I also
+have my gateway and route tables up and connected to everything they have to be connected to.
+I am now creating a launch template for my EC2 instances so that in case of failure my ASG
+has a template to go off on when creating new instances.
+
+I put the instances in a private subnet because I wanted only the application load balancer
+to be able to send traffic into the instances. This would help with traffic distribution, and
+when an instance is unhealthy the ALB would just route the traffic to a healthy instance while
+a new one is being provisioned. This would generally increase availability. If people could
+access the instance directly then all of that would be optional, and that's not what we want.
+
+The instance security group is configured to only accept HTTP traffic from the ALB because we
+don't want anything else talking to the instance, so we connected it to the security group of
+the ALB. We referenced a security group because an IP range was too broad and the IP of the ALB
+was not static, but the security group was more straight to the point.
+
+I excluded the NAT gateway from the project because I was hosting a static website that didn't
+need internet access, which was a strategic decision in order to cut cost on the project. To
+access the packages and stuff for the AMI, I created the S3 endpoint and connected it to the
+subnets where the instances would be launched.
+
+I also had to write a line in the user data to use IMDSv2 to get some metadata, because the
+metadata is located where the credentials for the assume role are located and we didn't want
+an accidental data leak.
+
+## Problems
+
+After creating the first draft of the template, I tested it out on an instance by adding it by
+hand, and oh my God did I run into issues.
+
+I realized I needed an S3 gateway endpoint, so I configured an S3 gateway endpoint so I could
+fetch the packages for the Amazon Linux. I was also missing the IAM role I created for the
+instance so it could access S3 buckets, so I had to modify the template and add it into the
+instance profile section. Since the instance is in a private subnet and can't access the
+internet, it needed the endpoint, but I mistakenly attached the endpoint to the public subnets'
+route table instead. I also didn't add a subnet to the launch template, so one was always chosen
+for me. I had to fix that too, and remove the subnet later after I had everything working, before
+adding the ASG.
+
+My final issue for the launch template was the user data. That was a lot. I initially put if
+statements at each step, which was unnecessary, so I removed them. One good thing was using
+`set -euo pipefail` to handle errors, and `/dev/console` to output to the console so that I could
+see what was breaking in the user data. That helped things a lot.
+
+Generally, the idea of the user data was to install nginx, sync the static website from S3 to
+`/usr/share/nginx/html` on the instance, fetch the AZ via IMDSv2, write the AZ into
+`instance-info.html`, and enable and start nginx.
+
+We had a curl error (28), and that was because we couldn't fetch the packages for the Amazon
+Linux, so the system ignored the repositories and found no match for nginx.
+
+Once all of that was fixed, the instance booted in no time, and I attached the ALB and target
+group to check the health and it was healthy.
+
+## Auto Scaling and IAM
+
+I deleted the test instance and created an Auto Scaling group for the instance after I was sure
+everything was working perfectly. I set the min to 2, desired to 2, and max to 4, because we
+needed at least 2 instances for reliability and 4 max across both availability zones because I
+optimized for at most a double increase in traffic, and it changes when needed. I enabled ELB
+health checks because EC2 health checks only check if the EC2 is running, and not whether it
+can't accept traffic or is slow.
+
+I rewrote the IAM policy for the IAM role to scope it to only `GetObject` and `ListBucket`, and
+set the resources to the ARN of the bucket and the ARN of the bucket with `/*`, that is the
+bucket and the things or files in it.
+
+## Unresolved
+
+The ALB is unreachable from the internet, but curl showed the DNS resolving to the two IPs with
+the connection attempts hanging. So far, I checked if the ALB was internet-facing, in both public
+subnets, security group allowing 0.0.0.0/0 on port 80, listener forwarding to target group, both
+targets healthy, NACL at default allowing all on all four subnets — and everything looked good,
+yet the connection failed on two different browsers and on the phone. We still don't know what is
+causing it.
+
+To save money, I tore down the ASG and ALB and left everything else. We will rebuild tomorrow and
+work on it again to find out what went wrong.
