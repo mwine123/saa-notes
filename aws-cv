@@ -1,0 +1,49 @@
+Highly Available Web Application on AWS
+Self-directed · VPC, EC2, ALB, Auto Scaling, IAM, VPC Endpoints
+
+-Provisioned an Auto Scaling group with two EC2 instances in VPC private subnets in two AZs, ALB nodes in the public subnets, 
+and a security group allowing traffic from the ALB to the instances.
+-Reduced cost by configuring an S3 gateway endpoint instead of a NAT gateway so that the instances could still fetch the Amazon 
+Linux repo packages and website files from S3.
+-Traced a curl timeout to the Amazon Linux repos in the system logs to an S3 endpoint associated with the wrong route table and 
+re-associated it with the private subnet's route table.
+-Resolved a TCP connection timeout to the ALB after having confirmed DNS resolved and curl was hanging, isolating 
+the cause to routing which led to checking the route table and finding an IGW route to 0.0.0.0/16 instead of 0.0.0.0/0.
+-Tested availability by terminating one instance and viewing the ASG activity history and target group health checks as another 
+instance was launched and passed.
+
+
+## workshoped ideas for tcp timeout issue
+tcp timeout issuew when connecting to alb
+caused by incorrectly configured destination address for igw on route
+dns resolution worked, but tcp was timing out (dig was good, curl was hanging)
+checked the route table and foundd the issue
+
+resolved a tcp connection timeout caused by an incorrectly configured destination address for igw on route table discovered this, 
+because curl was hanging which led to checking the route table and founding the issue.
+
+Discovered a tcp connection timeout when connecting to the alb because DNS resolved and curl was hanging which led checkin the 
+route table. Found an improperly configured destination address for the igw on the route table and resolved it.
+
+
+
+
+
+linked in post
+
+
+I recently built a highly available website on AWS. The goal was to put everything I learnt during my AWS re/Start program 
+into practice by building projects. I configured an auto scaling group spanning two private subnets in two different availability 
+zones, two ALB nodes in the public subnets receiving and directing traffic into the ASG instances, a security group that allows 
+traffic from only the ALB into the instances and a VPC S3 endpoint for the instances to fetch Amazon Linux repos from S3 instead 
+of using a NAT Gateway to save cost.
+
+I tried testing the connection to the ALB and it timed out, I tried figuring out what went wrong and for two days, everything 
+looked fine. The instances were running, health checks passed, so I decided to test the connection in a terminal and I noticed that 
+dig ran but curl hung, DNS resolved so the issue was below DNS. I went back to my route table and that is when I saw 0.0.0.0/16 
+set as the destination address for the route to the IGW instead of 0.0.0.0/0. After correcting it, the connection to the ALB went 
+through.
+
+That is when I realised that cloud resource setups are not about just provisioning resources and calling it a day, it is about how 
+they connect together. A small silent error in the connection and everything will look good, instance running and healthy, making 
+you wonder for days where the problem might be.
